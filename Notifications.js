@@ -5,7 +5,7 @@ const uuid = require('uuid')
 const router = express.Router()
 
 
-router.post('/', async (req, res) => {
+router.post('/', verify, (req, res) => {
 
     const data = req.body
     const time = data.time
@@ -27,8 +27,46 @@ router.post('/', async (req, res) => {
         })
 
     })
-
 })
+
+function verify(req, res, next) {
+
+    const pool = require('../App').mariadb
+    const token = req.headers['token']
+
+    if (token != undefined) {
+        const command = 'SELECT token FROM login_table WHERE token="$token"'.replace('$token', token)
+        pool.query(command).then((resQuery) => {
+
+            console.log(resQuery)
+            console.log(token)
+
+            if (resQuery[0] == undefined) {
+
+                res.json({
+                    statue: false
+                })
+                return
+            }
+
+            if (resQuery[0].token == token) {
+
+                next()
+            } else {
+                res.json({
+                    statue: false
+                })
+            }
+        })
+
+    } else {
+
+        res.json({
+            statue: false
+        })
+    }
+
+}
 
 
 module.exports = router
