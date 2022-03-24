@@ -8,12 +8,13 @@ router.post('/', verify, (req, res) => {
 
     const data = req.body
     const pool = require('../App').mariadb
+    const adminFCM = require('../App').FCM
 
     const id = uuid.v1()
 
     const notificationJSON = {
         id: id,
-        token: data.token,
+        token: req.headers['token'],
         message: {
             title: data.title,
             body: data.body,
@@ -32,25 +33,49 @@ router.post('/', verify, (req, res) => {
 
     pool.query(command).then((resQuery) => {
 
-        res.json({
-            statue: true,
-            message: 'Notification inserted'
-        })
+        const messaging = adminFCM.messaging()
+        const message = {
+            notification: {
+                title: data.title,
+                body: data.body
+            },
 
-        /*
-        
-        Firebase Cloud Messaging
-        
-        */
+            topic: 'notificationsapi'
+        }
+
+        messaging.send(message).then((resFCM) => {
+
+            console.log(resFCM)
+            res.json({
+                statueInserted: true,
+                statueSent: true,
+                statue: true,
+                message: 'Notification has inserted in database and sent to devices'
+            })
+
+        }).catch((err) => {
+            res.json({
+                statueInserted: true,
+                statueSent: false,
+                statue: true,
+                message: 'Notification does not sent to devices'
+            })
+
+            console.log(err)
+
+        })
 
 
     }).catch((err) => {
 
         res.json({
-            statue: false,
-            message: 'Notification does not inserted',
-            err: err
+            statueInserted: false,
+            statueSent: false,
+            statue: true,
+            message: 'Notification does not inserted'
         })
+
+        console.log(err)
     })
 
 })
@@ -64,8 +89,20 @@ function verify(req, res, next) {
 
     if (token != undefined && token != null) {
 
+        console.log(token)
         const command = 'SELECT * FROM projects_table WHERE token="$token"'.replace('$token', token)
         pool.query(command).then((resQuery) => {
+
+
+            if (resQuery[0] == undefined) {
+                res.json({
+                    statue: false,
+                    message: 'there is no project has created'
+                })
+                return
+
+            }
+
 
             if (resQuery[0].token == token) {
                 next()

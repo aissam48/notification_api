@@ -30,7 +30,6 @@ app.use('/scriptwarning', ScriptWarning)
 
 
 const pool = mariadb.createPool({
-
     host: '127.0.0.1',
     user: 'root',
     password: '0020dC5d78@.',
@@ -38,9 +37,19 @@ const pool = mariadb.createPool({
 })
 
 
+var adminFCM = require("firebase-admin");
+
+var serviceAccount = require("../notificationsapi-72e6c-firebase-adminsdk-tpb9b-f1ae8a76fa.json");
+
+adminFCM.initializeApp({
+    credential: adminFCM.credential.cert(serviceAccount)
+});
+
+
 pool.getConnection().then((res) => {
     console.log(res, 'hello mariadb')
     exports.mariadb = pool
+    exports.FCM = adminFCM
 
 }).catch((err) => {
 
