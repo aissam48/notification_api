@@ -18,23 +18,28 @@ router.post('/', verify, (req, res) => {
         projectName: data.projectName,
         dateAdded: data.dateAdded,
         description: data.description,
-        estimatedTime: data.estimatedTime
+        estimatedTime: data.estimatedTime,
+        dateFilter: data.dateFilter
     }
 
     jwt.sign({ data }, 'secretToken', (err, token) => {
 
         projectJSON.token = token
 
-        const command = 'INSERT INTO projects_table(token, projectName, dateAdded, description, estimatedTime) VALUES("$token", "$projectName", "$dateAdded", "$description", "$estimatedTime")'
+        const command = 'INSERT INTO projects_table(token, projectName, dateAdded, description, estimatedTime, dateFilter) VALUES("$token", "$projectName", "$dateAdded", "$description", "$estimatedTime", "$dateFilter")'
             .replace('$token', projectJSON.token)
             .replace('$projectName', projectJSON.projectName)
             .replace('$dateAdded', projectJSON.dateAdded)
             .replace('$description', projectJSON.description)
             .replace('$estimatedTime', projectJSON.estimatedTime)
+            .replace('$dateFilter', projectJSON.dateFilter)
 
-        pool.query(command).then((res) => {
+
+        pool.query(command).then((resQuery) => {
             res.send('project added')
+
         }).catch((err) => {
+            console.error(err)
             res.send(err)
         })
 
@@ -55,8 +60,11 @@ function verify(req, res, next) {
 
             console.log(resQuery)
 
-            if (resQuery[0] != {} && resQuery[0] != undefined && resQuery[0] != null && resQuery[0].token == token) {
+            console.log('inside verify')
 
+            if (resQuery[0].token == token) {
+
+                console.log('inside verify if')
                 next()
             }
         })

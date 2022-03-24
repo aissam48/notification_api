@@ -7,9 +7,11 @@ router.use(express.urlencoded({ extended: true }))
 router.post('/', verify, (req, res) => {
 
     const data = req.body
-    const time = data.time
+    const dateFilter = data.dateFilter
+    const pool = require('../App').mariadb
 
-    const command = 'SELECT * FROM projects_table WHERE time>="$time"'.replace('$time', time)
+
+    const command = 'SELECT * FROM projects_table WHERE dateFilter>="$dateFilter"'.replace('$dateFilter', dateFilter)
 
     pool.query(command).then((resQuery) => {
 
@@ -20,7 +22,8 @@ router.post('/', verify, (req, res) => {
 
     }).catch((err) => {
         res.json({
-            statue: false
+            statue: false,
+            message: err
         })
     })
 
@@ -36,13 +39,15 @@ function verify(req, res, next) {
         pool.query(command).then((resQuery) => {
 
             console.log(resQuery)
+            console.log(token)
 
             if (resQuery[0].token == token) {
 
                 next()
             } else {
                 res.json({
-                    statue: false
+                    statue: false,
+                    message: 'sttil inside verify'
                 })
             }
         })
