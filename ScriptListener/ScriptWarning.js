@@ -20,16 +20,22 @@ router.post('/', verify, (req, res) => {
             body: data.body,
             level: data.level
         },
-        date: data.date
+        createdDate: data.createdDate,
+        dateFilter: data.dateFilter
+
     }
 
-    const command = 'INSERT INTO notifications_table(id, token, title, body, level, date) VALUES("$id", "$token", "$title", "$body", "$level", "$date")'
+
+
+
+    const command = 'INSERT INTO notifications_table(id, token, title, body, level, createdDate, dateFilter) VALUES("$id", "$token", "$title", "$body", "$level", "$createdDate", "$dateFilter")'
         .replace('$id', id)
         .replace('$token', data.token)
         .replace('$title', data.title)
         .replace('$body', data.body)
         .replace('$level', data.level)
-        .replace('$date', data.date)
+        .replace('$createdDate', data.createdDate)
+        .replace('$dateFilter', data.dateFilter)
 
     pool.query(command).then((resQuery) => {
 

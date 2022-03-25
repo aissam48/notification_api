@@ -8,7 +8,7 @@ router.use(express.urlencoded({ extended: true }))
 
 router.post('/', async (req, res) => {
 
-    const pool = require('./App').mariadb
+    const pool = require('../App').mariadb
     const data = req.body
     const username = data.username
 

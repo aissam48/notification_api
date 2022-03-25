@@ -8,10 +8,10 @@ const router = express.Router()
 router.post('/', verify, (req, res) => {
 
     const data = req.body
-    const time = data.time
+    const dateFilter = data.dateFilter
     const pool = require('./App').mariadb
 
-    const command = 'SELECT * FROM notifications_table WHERE dateFilter>=$time'.replace('$time', time)
+    const command = 'SELECT * FROM notifications_table WHERE dateFilter>=$dateFilter'.replace('$dateFilter', dateFilter)
 
     pool.query(command).then((resQuery) => {
 
@@ -23,7 +23,7 @@ router.post('/', verify, (req, res) => {
     }).catch((err) => {
 
         res.json({
-            statue: false
+            statue: err
         })
 
     })
@@ -31,7 +31,7 @@ router.post('/', verify, (req, res) => {
 
 function verify(req, res, next) {
 
-    const pool = require('../App').mariadb
+    const pool = require('./App').mariadb
     const token = req.headers['token']
 
     if (token != undefined) {
@@ -50,6 +50,7 @@ function verify(req, res, next) {
             }
 
             if (resQuery[0].token == token) {
+
 
                 next()
             } else {

@@ -16,7 +16,7 @@ router.post('/', verify, (req, res) => {
     const projectJSON = {
         token: '',
         projectName: data.projectName,
-        dateAdded: data.dateAdded,
+        createdDate: data.createdDate,
         description: data.description,
         estimatedTime: data.estimatedTime,
         dateFilter: data.dateFilter
@@ -26,10 +26,10 @@ router.post('/', verify, (req, res) => {
 
         projectJSON.token = token
 
-        const command = 'INSERT INTO projects_table(token, projectName, dateAdded, description, estimatedTime, dateFilter) VALUES("$token", "$projectName", "$dateAdded", "$description", "$estimatedTime", "$dateFilter")'
+        const command = 'INSERT INTO projects_table(token, projectName, createdDate, description, estimatedTime, dateFilter) VALUES("$token", "$projectName", "$createdDate", "$description", "$estimatedTime", "$dateFilter")'
             .replace('$token', projectJSON.token)
             .replace('$projectName', projectJSON.projectName)
-            .replace('$dateAdded', projectJSON.dateAdded)
+            .replace('$createdDate', projectJSON.createdDate)
             .replace('$description', projectJSON.description)
             .replace('$estimatedTime', projectJSON.estimatedTime)
             .replace('$dateFilter', projectJSON.dateFilter)
@@ -60,16 +60,29 @@ function verify(req, res, next) {
 
             console.log(resQuery)
 
-            console.log('inside verify')
+
+
+            if (resQuery[0] == undefined) {
+                res.json({
+                    statue: false,
+                    messgae: 'there is no user associted with this token  ->' + token
+                })
+
+                return
+            }
 
             if (resQuery[0].token == token) {
 
-                console.log('inside verify if')
                 next()
             }
         })
 
     } else {
+
+        res.json({
+            statue: false,
+            messgae: 'token is empty or undefined'
+        })
 
     }
 

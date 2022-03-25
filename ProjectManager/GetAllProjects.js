@@ -41,13 +41,22 @@ function verify(req, res, next) {
             console.log(resQuery)
             console.log(token)
 
+            if (resQuery[0] == undefined) {
+
+                res.json({
+                    statue: false,
+                    message: 1
+                })
+                return
+            }
+
             if (resQuery[0].token == token) {
 
                 next()
             } else {
                 res.json({
                     statue: false,
-                    message: 'sttil inside verify'
+                    message: 2
                 })
             }
         })
@@ -55,7 +64,8 @@ function verify(req, res, next) {
     } else {
 
         res.json({
-            statue: false
+            statue: false,
+            message: 3
         })
     }
 
