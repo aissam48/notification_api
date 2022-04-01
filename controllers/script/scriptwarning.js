@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const uuid = require('uuid')
 const dateTime = require('node-datetime')
+const JOI = require('@hapi/joi')
 router.use(express.json())
 router.use(express.urlencoded({ extended: true }))
 const verify = require('../../config/validator').verifyprojectoken
@@ -12,9 +13,15 @@ router.post('/', verify, (req, res) => {
     const pool = require('../../config/mariadb').pool
     const firebaseAdmin = require('../../config/firebase').firebaseAdmin
 
-    /*create time for notification*/
+    /* remove 'Bearer ' text from token sequence*/
+    const bearer = req.headers['authorization']
+    const token = bearer.replace('Bearer ', '')
+
+    /*create createdDate for notification */
     const time = dateTime.create()
     const formatted = time.format('y-m-d H:M:S')
+    /* format() funtions format 22-04-01 14:55 but rqeuired 2022-04-01 14:55 */
+
     const createdDate = '20' + formatted
     const dateFilterString = '20' + formatted
         .replace('-', '')
@@ -22,19 +29,20 @@ router.post('/', verify, (req, res) => {
         .replace(' ', '')
         .replace(':', '')
         .replace(':', '')
+
     const dateFilter = Number(dateFilterString)
 
-    /*random id for notification*/
+    /* random unique id for notification */
     const id = uuid.v1()
 
-    /*notification body*/
+    /* format notification body */
     const notificationJSON = {
         id: id,
-        token: req.headers['authorization'].replace('bearer ', ''),
+        token: token,
         message: {
             title: data.title,
             body: data.body,
-            level: data.level
+            level: data.level,
         },
         created_date: createdDate,
         date_filter: dateFilter
@@ -54,7 +62,8 @@ router.post('/', verify, (req, res) => {
                 },
                 data: {
                     level: data.level,
-                    token: req.headers['authorization'].replace('bearer ', ''),
+                    projectName: data.projectName,
+                    token: token,
                     createdDate: createdDate,
                     click_action: process.env.FLUTTER_NOTIFICATION_CLICK,
                     group_key: process.env.GROUP_KEY

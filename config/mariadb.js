@@ -3,6 +3,7 @@ const env = require('dotenv')
 env.config()
 
 function connectMariadb() {
+    /* configuration of mariadb  */
     const pool = mariadb.createPool({
         host: process.env.MARIADB_HOST,
         user: process.env.MARIADB_USER,

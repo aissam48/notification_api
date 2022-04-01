@@ -12,12 +12,12 @@ router.post('/', verify, (req, res) => {
     const command = 'SELECT * FROM projects_table WHERE date_filter>=?'
 
     /* validation of dateFilter */
-    if (Number(dateFilter) == 0 || Number(dateFilter).length == 14) {
+    if (fomateDateFilter == 0 || fomateDateFilter.toString().length == 14) {
         //fetch all projects from local mariadb
         pool.query(command, [dateFilter]).then((resQuery) => {
             res.json({
                 statue: true,
-                result: resQuery
+                result: Array.from(resQuery)
             })
         }).catch((err) => {
             res.json({

@@ -1,30 +1,32 @@
-/* methode verify token of user is valid or not */
+/* midllewar to verify token of user if is valid or not */
 function verifyusertoken(req, res, next) {
-
     const pool = require('./mariadb').pool
-    const bearer = req.headers['authorization']
-    const token = bearer.replace('Bearer ', '')
+    const bearerToken = req.headers['authorization']
 
     /* Check is this token valid or not */
-    if (token != undefined) {
+    if (bearerToken != undefined) {
+
+        const token = bearerToken.replace('Bearer ', '')
+        //fetch user who associated with this token
         const command = 'SELECT token FROM login_table WHERE token=?'
         pool.query(command, [token]).then((resQuery) => {
 
-            if (resQuery[0] == undefined) {
-                res.json({
-                    statue: false,
-                    message: ' There is no user associted with this token'
-                })
-                return
-            }
-
-            if (resQuery[0].token == token) {
-                next()
-            } else {
-                res.json({
-                    statue: false,
-                    message: ' There is no user associted with this token'
-                })
+            //cast resQuery to Array
+            const resQueryArray = Array.from(resQuery)
+            switch (resQueryArray[0]) {
+                case undefined: {
+                    res.json({
+                        statue: false,
+                        message: ' There is no user associted with this token'
+                    })
+                }
+                default: {
+                    switch (resQueryArray[0].token) {
+                        case token: {
+                            next()
+                        }
+                    }
+                }
             }
         })
     } else {
@@ -37,32 +39,34 @@ function verifyusertoken(req, res, next) {
 exports.verifyusertoken = verifyusertoken
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-/* methode verify token of user is valid or not */
+/* midllewar verify token of project if is valid or not */
 function verifyprojectoken(req, res, next) {
 
-    const bearer = req.headers['authorization']
-    const token = bearer.replace('Bearer ', '')
-    console.log(token)
+    const bearerToken = req.headers['authorization']
     const pool = require('./mariadb').pool
-    if (token != undefined && token != null) {
+
+    if (bearerToken != undefined) {
+        const token = bearerToken.replace('Bearer ', '')
+
         /*fetch project associated with this token*/
         const command = 'SELECT * FROM projects_table WHERE token=?'
         pool.query(command, [token]).then((resQuery) => {
-            if (resQuery[0] == undefined) {
-                res.json({
-                    statue: false,
-                    message: 'there is no project has created with this token'
-                })
-                return
-            }
-
-            if (resQuery[0].token == token) {
-                next()
-            } else {
-                res.json({
-                    statue: false,
-                    message: 'there is no project associted with this token'
-                })
+            //cast resQuery to Array
+            const resQueryArray = Array.from(resQuery)
+            switch (resQueryArray[0]) {
+                case undefined: {
+                    res.json({
+                        statue: false,
+                        message: ' There is no user associted with this token'
+                    })
+                }
+                default: {
+                    switch (resQueryArray[0].token) {
+                        case token: {
+                            next()
+                        }
+                    }
+                }
             }
         })
     } else {

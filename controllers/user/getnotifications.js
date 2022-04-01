@@ -14,12 +14,14 @@ router.post('/', verify, (req, res) => {
     const command = 'SELECT * FROM notifications_table WHERE date_filter>=?'
 
     /* validation of dateFilter */
-    if (Number(dateFilter) == 0 || Number(dateFilter).length == 14) {
+    if (Number(dateFilter) == 0 || dateFilter.length == 14) {
         //fetch all notifications from local mariadb
         pool.query(command, [dateFilter]).then((resQuery) => {
+
+            const jso = Array.from(resQuery)
             res.json({
                 statue: true,
-                result: resQuery
+                result: jso
             })
         }).catch((err) => {
             res.json({
