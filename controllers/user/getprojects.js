@@ -8,7 +8,7 @@ router.post('/', verify, (req, res) => {
     const data = req.body
     const dateFilter = data.dateFilter
     console.log(dateFilter)
-    const pool = require('../../config/mariadb').pool
+    const pool = requpire('../../config/mariadb').pool
     const command = 'SELECT * FROM projects_table WHERE date_filter>=?'
 
     /* validation of dateFilter */

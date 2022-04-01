@@ -1,7 +1,5 @@
 const express = require('express')
 const router = express.Router()
-router.use(express.json())
-router.use(express.urlencoded({ extended: true }))
 const verify = require('../../config/validator').verifyusertoken
 
 /*endpoint: /getnotifications, methode: POST */
@@ -14,14 +12,12 @@ router.post('/', verify, (req, res) => {
     const command = 'SELECT * FROM notifications_table WHERE date_filter>=?'
 
     /* validation of dateFilter */
-    if (Number(dateFilter) == 0 || dateFilter.length == 14) {
+    if (dateFilter == 0 || dateFilter.length == 14) {
         //fetch all notifications from local mariadb
         pool.query(command, [dateFilter]).then((resQuery) => {
-
-            const jso = Array.from(resQuery)
             res.json({
                 statue: true,
-                result: jso
+                result: Array.from(resQuery)
             })
         }).catch((err) => {
             res.json({

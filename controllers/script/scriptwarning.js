@@ -3,8 +3,6 @@ const router = express.Router()
 const uuid = require('uuid')
 const dateTime = require('node-datetime')
 const JOI = require('@hapi/joi')
-router.use(express.json())
-router.use(express.urlencoded({ extended: true }))
 const verify = require('../../config/validator').verifyprojectoken
 
 /*endpoint: /scriptwarning, methode: POST*/
@@ -20,8 +18,7 @@ router.post('/', verify, (req, res) => {
     /*create createdDate for notification */
     const time = dateTime.create()
     const formatted = time.format('y-m-d H:M:S')
-    /* format() funtions format 22-04-01 14:55 but rqeuired 2022-04-01 14:55 */
-
+    /* format() funtions return format 22-04-01 14:55 but require 2022-04-01 14:55 */
     const createdDate = '20' + formatted
     const dateFilterString = '20' + formatted
         .replace('-', '')
