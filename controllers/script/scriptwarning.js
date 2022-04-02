@@ -2,18 +2,24 @@ const express = require('express')
 const router = express.Router()
 const uuid = require('uuid')
 const dateTime = require('node-datetime')
-const JOI = require('@hapi/joi')
-const verify = require('../../config/validator').verifyprojectoken
+const mariadb = require('../../lib/mariadb').mariadb
+const firebaseAdmin = require('../../lib/firebase').firebaseAdmin
+const { jwt } = require('../../lib/jwt')
 
 /*endpoint: /scriptwarning, methode: POST*/
-router.post('/', verify, (req, res) => {
+router.post('/', jwt.jwtProject, (req, res) => {
     const data = req.body
-    const pool = require('../../config/mariadb').pool
-    const firebaseAdmin = require('../../config/firebase').firebaseAdmin
 
     /* remove 'Bearer ' text from token sequence*/
-    const bearer = req.headers['authorization']
-    const token = bearer.replace('Bearer ', '')
+    const bearerToken = req.headers['authorization']
+    if (bearerToken == undefined) {
+        res.json({
+            statue: false,
+            message: 'token is undefined or empty'
+        })
+        return
+    }
+    const token = bearerToken.split(' ')[1]
 
     /*create createdDate for notification */
     const time = dateTime.create()
@@ -49,47 +55,56 @@ router.post('/', verify, (req, res) => {
     const command = 'INSERT INTO notifications_table(id, token, title, body, level, created_date, date_filter) VALUES(?, ?, ?, ?, ?, ?, ?)'
 
     /*insert notification body into database*/
-    pool.query(command, [notificationJSON.id, notificationJSON.token, notificationJSON.message.title, notificationJSON.message.body, notificationJSON.message.level, notificationJSON.created_date, notificationJSON.date_filter])
-        .then((resQuery) => {
-            const messaging = firebaseAdmin.messaging()
-            const message = {
-                notification: {
-                    title: data.title,
-                    body: data.body
-                },
-                data: {
-                    level: data.level,
-                    projectName: data.projectName,
-                    token: token,
-                    createdDate: createdDate,
-                    click_action: process.env.FLUTTER_NOTIFICATION_CLICK,
-                    group_key: process.env.GROUP_KEY
-                },
-                topic: process.env.TOPIC
-            }
-            /* push notification of project info to user*/
-            messaging.send(message).then((resFCM) => {
-                res.json({
-                    statueInserted: true,
-                    statueSent: true,
-                    statue: true,
-                    message: 'Notification has inserted in database and sent to devices'
+    mariadb.then((pool) => {
+        pool.query(command, [notificationJSON.id, notificationJSON.token, notificationJSON.message.title, notificationJSON.message.body, notificationJSON.message.level, notificationJSON.created_date, notificationJSON.date_filter])
+            .then((resQuery) => {
+                const messaging = firebaseAdmin.messaging()
+                const message = {
+                    notification: {
+                        title: data.title,
+                        body: data.body
+                    },
+                    data: {
+                        level: data.level,
+                        projectName: data.projectName,
+                        token: token,
+                        createdDate: createdDate,
+                        click_action: process.env.FLUTTER_NOTIFICATION_CLICK,
+                        group_key: process.env.GROUP_KEY
+                    },
+                    topic: process.env.TOPIC
+                }
+                /* push notification of project info to user*/
+                messaging.send(message).then((resFCM) => {
+                    res.json({
+                        statueInserted: true,
+                        statueSent: true,
+                        statue: true,
+                        message: 'Notification has inserted in database and sent to devices'
+                    })
+                }).catch((err) => {
+                    res.json({
+                        statueInserted: true,
+                        statueSent: false,
+                        statue: true,
+                        message: 'Notification does not sent to devices'
+                    })
                 })
             }).catch((err) => {
                 res.json({
-                    statueInserted: true,
+                    statueInserted: false,
                     statueSent: false,
                     statue: true,
-                    message: 'Notification does not sent to devices'
+                    message: err
                 })
             })
-        }).catch((err) => {
-            res.json({
-                statueInserted: false,
-                statueSent: false,
-                statue: true,
-                message: err
-            })
+    }).catch((err) => {
+        res.json({
+            statueInserted: false,
+            statueSent: false,
+            statue: true,
+            message: err
         })
+    })
 })
 module.exports = router
