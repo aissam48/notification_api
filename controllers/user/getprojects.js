@@ -26,7 +26,7 @@ router.post('/', jwt.jwtSecure, (req, res) => {
                     default: {
                         res.json({
                             statue: true,
-                            result: []
+                            result: Array.from(resQuery)
                         })
                         break
                     }
