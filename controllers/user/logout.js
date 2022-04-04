@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
         default: {
             /*set empty value for token for logout */
             mariadb.then((pool) => {
-                pool.query(command, ['', token.replace('bearer ', '')]).then((resQuery) => {
+                pool.query(command, ['', token]).then((resQuery) => {
                     /* handle if value of token has changed to empty value */
                     switch (resQuery.affectedRows) {
                         case 0: {

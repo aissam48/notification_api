@@ -15,10 +15,23 @@ router.post('/', jwt.jwtSecure, (req, res) => {
         //fetch all projects from local mariadb
         mariadb.then((pool) => {
             pool.query(command, [dateFilter]).then((resQuery) => {
-                res.json({
-                    statue: true,
-                    result: Array.from(resQuery)
-                })
+                switch (Array.from(resQuery).length) {
+                    case 0: {
+                        res.json({
+                            statue: true,
+                            result: []
+                        })
+                        break
+                    }
+                    default: {
+                        res.json({
+                            statue: true,
+                            result: []
+                        })
+                        break
+                    }
+
+                }
             }).catch((err) => {
                 res.json({
                     statue: false,

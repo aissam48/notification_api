@@ -10,6 +10,39 @@ const { jwt } = require('../../lib/jwt')
 router.post('/', jwt.jwtProject, (req, res) => {
     const data = req.body
 
+    /* chack if any of data items is empty or undefined */
+
+    switch (true) {
+        case (data.title == undefined): {
+            res.json({
+                statue: false,
+                message: 'title is undefined or empty'
+            })
+            return
+        }
+        case (data.body == undefined): {
+            res.json({
+                statue: false,
+                message: 'body is undefined or empty'
+            })
+            return
+        }
+        case (data.level == undefined): {
+            res.json({
+                statue: false,
+                message: 'level is undefined or empty'
+            })
+            return
+        }
+        case (data.projectName == undefined): {
+            res.json({
+                statue: false,
+                message: 'projectName is undefined or empty'
+            })
+            return
+        }
+    }
+
     /* remove 'Bearer ' text from token sequence*/
     const bearerToken = req.headers['authorization']
     if (bearerToken == undefined) {
@@ -46,6 +79,7 @@ router.post('/', jwt.jwtProject, (req, res) => {
             title: data.title,
             body: data.body,
             level: data.level,
+            projectName: data.projectName
         },
         created_date: createdDate,
         date_filter: dateFilter
