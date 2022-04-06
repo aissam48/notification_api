@@ -8,7 +8,7 @@ router.post('/', jwt.jwtSecure, (req, res) => {
 
     const data = req.body
     const dateFilter = data.dateFilter
-    const command = 'SELECT * FROM notifications_table WHERE date_filter>=?'
+    const command = 'SELECT * FROM notifications_table WHERE date_filter>?'
 
     /* validation of dateFilter */
     if (dateFilter == 0 || dateFilter.length == 14) {

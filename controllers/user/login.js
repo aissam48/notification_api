@@ -29,6 +29,7 @@ router.post('/', async (req, res) => {
     mariadb.then((pool) => {
         const username = data.username
         const password = data.password
+        //create object from logInClass
         const login = new logInClass(username, password)
         const command = 'SELECT * FROM login_table WHERE username=? AND password=?'
         /*query user with username and password*/
