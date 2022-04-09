@@ -12,6 +12,8 @@ router.post('/', (req, res) => {
     const command = 'UPDATE login_table SET device_token=? WHERE username=?'
     mariadb.then((pool) => {
         pool.query(command, [devicetoken, username])
+        const commandGetAllDeviceTokens = 'UPDATE notifications_checker_table SET device_token=? WHERE username=?'
+        pool.query(commandGetAllDeviceTokens, [devicetoken, username])
     })
 
 })

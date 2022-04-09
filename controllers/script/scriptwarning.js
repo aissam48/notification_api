@@ -5,13 +5,13 @@ const dateTime = require('node-datetime')
 const mariadb = require('../../lib/mariadb').mariadb
 const firebaseAdmin = require('../../lib/firebase').firebaseAdmin
 const { jwt } = require('../../lib/jwt')
+const FCM = require('fcm-node')
 
 /*endpoint: /scriptwarning, methode: POST*/
 router.post('/', jwt.jwtProject, (req, res) => {
     const data = req.body
 
     /* chack if any of data items is empty or undefined */
-
     switch (true) {
         case (data.title == undefined): {
             res.json({
@@ -96,10 +96,10 @@ router.post('/', jwt.jwtProject, (req, res) => {
         exemple: if script sent 5 notification to user,
         so we gonna insert 5 rows with same dovice_token
         */
-        const commandDeviceToken = 'SELECT device_token FROM login_table'
+        const commandDeviceToken = 'SELECT * FROM login_table'
         pool.query(commandDeviceToken).then(async (deviceTokens) => {
             const deviceTokensList = Array.from(deviceTokens)
-            const commandForEachDevice = 'INSERT INTO notifications_checker_table(notification_id,title,body,level,token,created_date,date_filter,device_token,statue) VALUES(?,?,?,?,?,?,?,?,?)'
+            const commandForEachDevice = 'INSERT INTO notifications_checker_table(notification_id,title,body,level,token,created_date,date_filter,device_token,username,statue) VALUES(?,?,?,?,?,?,?,?,?,?)'
             for await (const item of deviceTokensList) {
                 pool.query(commandForEachDevice, [
                     notificationJSON.notification_id,
@@ -110,6 +110,7 @@ router.post('/', jwt.jwtProject, (req, res) => {
                     notificationJSON.created_date,
                     notificationJSON.date_filter,
                     item.device_token,
+                    item.username,
                     'unReceived'
                 ])
             }

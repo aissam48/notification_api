@@ -6,7 +6,8 @@ const mariadb = require('../../lib/mariadb').mariadb
 router.post('/', async (req, res) => {
 
     const bearerToken = req.headers['authorization']
-    const command = 'UPDATE login_table SET token=? WHERE token=?'
+    const username = req.body.username
+    const command = 'UPDATE login_table SET token=?, device_token=? WHERE token=?'
     if (bearerToken == undefined) {
         res.json({
             success: false,
@@ -27,7 +28,7 @@ router.post('/', async (req, res) => {
         default: {
             /*set empty value for token for logout */
             mariadb.then((pool) => {
-                pool.query(command, ['', token]).then((resQuery) => {
+                pool.query(command, ['', '', token]).then((resQuery) => {
                     /* handle if value of token has changed to empty value */
                     switch (resQuery.affectedRows) {
                         case 0: {
@@ -42,6 +43,8 @@ router.post('/', async (req, res) => {
                                 success: true,
                                 message: 'token has deleted'
                             })
+                            const deleteAllDeviceTokens = 'UPDATE notifications_checker_table SET device_token=? WHERE username=?'
+                            pool.query(deleteAllDeviceTokens, ['', username])
                             break
                         }
                     }
