@@ -5,7 +5,7 @@ const dateTime = require('node-datetime')
 const mariadb = require('../../lib/mariadb').mariadb
 const firebaseAdmin = require('../../lib/firebase').firebaseAdmin
 const { jwt } = require('../../lib/jwt')
-const FCM = require('fcm-node')
+
 
 /*endpoint: /scriptwarning, methode: POST*/
 router.post('/', jwt.jwtProject, (req, res) => {
@@ -56,13 +56,14 @@ router.post('/', jwt.jwtProject, (req, res) => {
 
     /*create createdDate for notification */
     const time = dateTime.create()
-    const formatted = time.format('y-m-d H:M:S')
+    const formatted = time.format('y-m-d H:M:S:N')
     /* format() funtions return format 22-04-01 14:55 but require 2022-04-01 14:55 */
     const createdDate = '20' + formatted
     const dateFilterString = '20' + formatted
         .replace('-', '')
         .replace('-', '')
         .replace(' ', '')
+        .replace(':', '')
         .replace(':', '')
         .replace(':', '')
 
@@ -91,86 +92,48 @@ router.post('/', jwt.jwtProject, (req, res) => {
     /*insert notification body into database*/
     mariadb.then((pool) => {
 
-        /*
-        this query for insert each device_token with each notification
-        exemple: if script sent 5 notification to user,
-        so we gonna insert 5 rows with same dovice_token
-        */
-        const commandDeviceToken = 'SELECT * FROM login_table'
-        pool.query(commandDeviceToken).then(async (deviceTokens) => {
-            const deviceTokensList = Array.from(deviceTokens)
-            const commandForEachDevice = 'INSERT INTO notifications_checker_table(notification_id,title,body,level,token,created_date,date_filter,device_token,username,statue) VALUES(?,?,?,?,?,?,?,?,?,?)'
-            for await (const item of deviceTokensList) {
-                pool.query(commandForEachDevice, [
-                    notificationJSON.notification_id,
-                    notificationJSON.message.title,
-                    notificationJSON.message.body,
-                    notificationJSON.message.level,
-                    notificationJSON.token,
-                    notificationJSON.created_date,
-                    notificationJSON.date_filter,
-                    item.device_token,
-                    item.username,
-                    'unReceived'
-                ])
-            }
-        })
-        //////////////
         pool.query(command, [notificationJSON.notification_id, notificationJSON.token, notificationJSON.message.title, notificationJSON.message.body, notificationJSON.message.level, notificationJSON.created_date, notificationJSON.date_filter])
             .then((resQuery) => {
 
-                //fetch all device tokens from login_table
-                const command = 'SELECT device_token FROM login_table'
-                pool.query(command).then(async (resultTokens) => {
+                const messaging = firebaseAdmin.messaging()
+                const message = {
+                    data: {
+                        title: data.title,
+                        body: data.body,
+                        level: data.level,
+                        projectName: data.projectName,
+                        token: token,
+                        notification_id: notification_id,
+                        createdDate: createdDate,
+                        click_action: process.env.FLUTTER_NOTIFICATION_CLICK,
+                        group_key: process.env.GROUP_KEY
+                    },
+                    android: {
+                        priority: 'high'
+                    },
 
-                    var allDeviceTokens = []
-                    const allTokens = Array.from(resultTokens)
-                    //get only value of tokens
-                    for await (const item of allTokens) {
-                        const token = await item.device_token
-                        allDeviceTokens.push(token)
-                    }
-
-                    const messaging = firebaseAdmin.messaging()
-                    const message = {
-                        notification: {
-                            title: data.title,
-                            body: data.body
-                        },
-                        data: {
-                            level: data.level,
-                            projectName: data.projectName,
-                            token: token,
-                            notification_id: notification_id,
-                            createdDate: createdDate,
-                            click_action: process.env.FLUTTER_NOTIFICATION_CLICK,
-                            group_key: process.env.GROUP_KEY
-                        },
-                        tokens: allDeviceTokens
-                    }
-                    /* push notification of project info to user*/
-                    messaging.sendMulticast(message).then((resFCM) => {
-                        res.json({
-                            statueInserted: true,
-                            statueSent: true,
-                            statue: true,
-                            message: 'Notification has inserted in database and sent to devices'
-                        })
-                    }).catch((err) => {
-                        res.json({
-                            statueInserted: true,
-                            statueSent: false,
-                            statue: true,
-                            message: 'Notification does not sent to devices'
-                        })
+                    apns: {
+                        headers: {
+                            'apns-priority': '5'
+                        }
+                    },
+                    topic: process.env.TOPIC
+                }
+                /* push notification of project info to user*/
+                messaging.send(message).then((resFCM) => {
+                    res.json({
+                        statueInserted: true,
+                        statueSent: true,
+                        statue: true,
+                        message: 'Notification has inserted in database and sent to devices'
                     })
-                })
-            }).catch((err) => {
-                res.json({
-                    statueInserted: false,
-                    statueSent: false,
-                    statue: true,
-                    message: err
+                }).catch((err) => {
+                    res.json({
+                        statueInserted: true,
+                        statueSent: false,
+                        statue: true,
+                        message: 'Notification does not sent to devices'
+                    })
                 })
             })
     }).catch((err) => {
